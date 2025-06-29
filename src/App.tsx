@@ -96,61 +96,68 @@ import UserTable from './components/UserTable';
 import UserFormModal from "./components/FormModalUser";
 import type { User } from './interfaces/User';
 import DynamicFieldsForm from './components/SearchDynamic';
+import ProfileForm from './components/CapsiBillingForm';
 
-function App() {
-  // const [drawerOpen, setDrawerOpen] = useState(false);
-  // const [users, setUsers] = useState<User[]>([]);
-  // const [editingUser, setEditingUser] = useState<User | null>(null);
-  // const [editModalOpen, setEditModalOpen] = useState(false);
+const App: React.FC = () => {
+//   const [drawerOpen, setDrawerOpen] = useState(false);
+//   const [users, setUsers] = useState<User[]>([]);
+//   const [editingUser, setEditingUser] = useState<User | null>(null);
+//   const [editModalOpen, setEditModalOpen] = useState(false);
 
-  // useEffect(() => {
-  //   const savedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-  //   setUsers(savedUsers);
-  // }, []);
+//   useEffect(() => {
+//     const savedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+//     setUsers(savedUsers);
+//   }, []);
 
-  // const handleAddUser = (newUser: User) => {
-  //   const updatedUsers = [...users, newUser];
-  //   localStorage.setItem('users', JSON.stringify(updatedUsers));
-  //   setUsers(updatedUsers);
-  //   setDrawerOpen(false);
-  // };
+//   const handleAddUser = (newUser: User) => {
+//     const updatedUsers = [...users, newUser];
+//     localStorage.setItem('users', JSON.stringify(updatedUsers));
+//     setUsers(updatedUsers);
+//     setDrawerOpen(false);
+//   };
 
-  // const handleEdit = (user: User) => {
-  //   setEditingUser(user);
-  //   setEditModalOpen(true);
-  // };
+//   const handleEdit = (user: User) => {
+//     setEditingUser(user);
+//     setEditModalOpen(true);
+//   };
 
-  // const handleUpdateUser = (updatedUser: User) => {
-  //   const updatedList = users.map((user) =>
-  //     user.email === updatedUser.email ? updatedUser : user
-  //   );
-  //   localStorage.setItem('users', JSON.stringify(updatedList));
-  //   setUsers(updatedList);
-  //   setEditModalOpen(false);
-  //   setEditingUser(null);
-  // };
+//   const handleUpdateUser = (updatedUser: User) => {
+//     const updatedList = users.map((user) =>
+//       user.email === updatedUser.email ? updatedUser : user
+//     );
+//     localStorage.setItem('users', JSON.stringify(updatedList));
+//     setUsers(updatedList);
+//     setEditModalOpen(false);
+//     setEditingUser(null);
+//   };
 
-  // return (
-  //   <>
-  //     <button onClick={() => setDrawerOpen(true)}>Add User</button>
+//   return (
+//     <>
+//       <button onClick={() => setDrawerOpen(true)}>Add User</button>
 
-  //     <UserFormDrawer
-  //       open={drawerOpen}
-  //       onClose={() => setDrawerOpen(false)}
-  //       onAdd={handleAddUser}
-  //     />
+//       <UserFormDrawer
+//         open={drawerOpen}
+//         onClose={() => setDrawerOpen(false)}
+//         onAdd={handleAddUser}
+//       />
 
-  //     <UserTable users={users} onEdit={handleEdit} />
+//       <UserTable users={users} onEdit={handleEdit} />
 
-  //     <UserFormModal
-  //       open={editModalOpen}
-  //       onClose={() => setEditModalOpen(false)}
-  //       user={editingUser}
-  //       onUpdate={handleUpdateUser}
-  //     />
-  //   </>
-  // );
-  <DynamicFieldsForm/>
+//       <UserFormModal
+//         open={editModalOpen}
+//         onClose={() => setEditModalOpen(false)}
+//         user={editingUser}
+//         onUpdate={handleUpdateUser}
+//       />
+//     </>
+//   );
+  // 
+  return (
+    <div>
+      <ProfileForm />
+      {/* <DynamicFieldsForm/> */}
+    </div>
+  );
 
 }
 
