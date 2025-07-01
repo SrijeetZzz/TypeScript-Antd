@@ -1,5 +1,6 @@
-import React ,{useRef , useState}from "react";
+import React, { useState } from "react";
 import type { Profile } from "../interfaces/Profile";
+import { indianStates } from "../interfaces/Profile";
 import {
   Form,
   Input,
@@ -10,51 +11,235 @@ import {
   Col,
   Divider,
   Space,
-
 } from "antd";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
-
-import type { FormInstance } from "antd/es/form";
+import type { FormInstance } from "antd";
 
 interface ProfileFormProps {
-  formRef: React.RefObject<FormInstance<Profile>>;
+  onSuccess?: () => void;
+  onClose?: () => void;
+  form: FormInstance<Profile>;
 }
 
-const ProfileForm: React.FC<ProfileFormProps> = ({ formRef }) => {
-  const [form] = Form.useForm<Profile>();
-  const {Option} = Select;
-  const contactAddRef = useRef<() => void>();
-  const addressAddRef = useRef<() => void>();
-  
-  const [contactFields, setContactFields] = useState<number>(0);
-  const [addressFields, setAddressFields] = useState<number>(0);
+const ProfileForm: React.FC<ProfileFormProps> = ({
+  onSuccess,
 
-  React.useEffect(() => {
-    if (formRef) {
-      formRef.current = form;
-    }
-  }, [form, formRef]);
+  form,
+}) => {
+  const { Option } = Select;
+  const display: string = Form.useWatch("party_grp", form);
+  const display_two: string = Form.useWatch("gst_type", form);
+  const [selectedType, setSelectedType] = useState("");
+  const [ggst, setGgst] = useState("");
+  const [gpan, setGpan] = useState("");
+  // const handleChangePan = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const value = event.target.value;
+
+  //   if (value.length > 12) {
+  //     const val = value.slice(2, 12);
+
+  //     form.setFieldValue("pan_no", val);
+  //   } else {
+  //     setGpan("");
+  //   }
+  // };
+//   const handleChangePan = (event: React.ChangeEvent<HTMLInputElement>) => {
+//   let value = event.target.value.toUpperCase(); // PAN must be uppercase
+//   if (value.length > 12) {
+//     value = value.slice(2, 12); // Only first 10 characters
+//   }
+//   setGpan(value); // Save to state
+//   form.setFieldValue("pan_no", value); // Update form value
+// };
+  // const handleChangePan = (e :string)=>{
+  //   const val = form.getFieldValue(e.value);
+  //   if(val.length>12){
+  //     form.setFieldValue(e, val.slice(2,12))
+  //   }
+  //   else{
+  //     form.setFieldValue(val,"")
+  //   }
+  // }
+  const handleTypeChange = (value: string) => {
+    setSelectedType(value);
+  };
+
+  // const onFinish = (values: Profile) => {
+  //   console.log("Submitted: ", values);
+  //   form.resetFields();
+  //   onSuccess?.();
+  // };
+const onFinish = (values: Profile) => {
+  console.log("Submitted: ", values);
+
+  // Get current counter from localStorage or default to 1
+  const currentCount = parseInt(localStorage.getItem("profileCount") || "1");
+
+  // Store the values with key "Profile_1", "Profile_2", etc.
+  localStorage.setItem(`Profile_${currentCount}`, JSON.stringify(values));
+
+  // Increment and store the updated count
+  localStorage.setItem("profileCount", (currentCount + 1).toString());
+
+  form.resetFields();
+  onSuccess?.();
+};
+const getStateFromGST = (gst: string): string | undefined => {
+  if (gst.length < 2) return undefined;
+  const code = parseInt(gst.slice(0, 2));
+  const state = indianStates.find((s) => s.id === code);
+  return state?.name;
+};
+
+// const handleChangeGST = (event: React.ChangeEvent<HTMLInputElement>) => {
+//   const gstValue = event.target.value.toUpperCase();
+//   setGgst(gstValue);
+//   form.setFieldValue("gst_no", gstValue);
+
+//   const detectedState = getStateFromGST(gstValue);
+//   if (detectedState) {
+//     form.setFieldValue("states", detectedState);
+//   }
+// };
+const handleGSTInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const gstValue = event.target.value.toUpperCase();
+
+  // Set GST in form and local state
+  setGgst(gstValue);
+  form.setFieldValue("gst_no", gstValue);
+
+  // Extract and set PAN (characters 3–12 of GST)
+  const pan = gstValue.slice(2, 12);
+  if (pan.length === 10) {
+    setGpan(pan);
+    form.setFieldValue("pan_no", pan);
+  } else {
+    setGpan("");
+    form.setFieldValue("pan_no", "");
+  }
+
+  // Extract and set State from first 2 digits
+  const detectedState = getStateFromGST(gstValue);
+  if (detectedState) {
+    form.setFieldValue("state", detectedState);
+     // optional for address
+  }
+};
+
+
   return (
-    <Form form={form} layout="vertical" >
+    <Form
+      form={form}
+      layout="vertical"
+      onFinish={onFinish}
+      onFinishFailed={(errorInfo) => {
+      console.log("Validation Failed:", errorInfo);
+  }}
+      initialValues={{
+        contact_details: [
+          {
+            contact_name: "",
+            designation: "",
+            phone_no: "",
+            email: "",
+            cc: "",
+          },
+        ],
+        address_details: [
+    {
+      address_type: undefined,
+      building: undefined,
+      address_state: undefined,
+      street: undefined,
+      name: undefined,
+      city: undefined,
+      district: undefined,
+      country: undefined,
+      landmark: undefined,
+      pincode: undefined,
+    },
+  ],
+      }}
+    >
       {/* Add party */}
+
       <Row gutter={[16, 4]}>
         <Col span={8}>
           <Form.Item
             label="Party Name"
             name="party_name"
-            rules={[{ required: true, message: "Party name is required" }]}
+            rules={[
+              {
+                required: true,
+                message: "Party name is required",
+              },
+              {
+                whitespace: true,
+                message: "Party Name cant be empty",
+              },
+            ]}
           >
             <Input placeholder="Party name" />
           </Form.Item>
         </Col>
         <Col span={8}>
-          <Form.Item label="Alias/Short Name" name="alias">
+          <Form.Item
+            label="Alias/Short Name"
+            name="alias"
+            rules={[
+              {
+                whitespace: true,
+                message: "Party Name cant be empty",
+              },
+              {
+                min: 3,
+                max: 80,
+                message:
+                  "Length must be Minimum 3 or Maximum 80 characters long",
+              },
+              {
+                pattern: /^[a-zA-Z\d][a-zA-Z\d\s.,()_&-]{3,80}$/,
+                message:
+                  "Only alphanumeric with space and some special characters i.e. '_', '(', ')', '&', '-', '.' and ',' are allowed",
+              },
+            ]}
+          >
             <Input />
           </Form.Item>
         </Col>
         <Col span={8}>
-          <Form.Item label="Party Group" name="party_grp">
-            <Select showSearch>
+          <Form.Item
+            label="Party Group"
+            name="party_grp"
+            rules={[
+              {
+                required: true,
+                message: "Party Group is required",
+              },
+            ]}
+          >
+            <Select
+              showSearch
+              onChange={(value) => {
+                form.setFieldValue("party_grp", value);
+                form.setFieldValue("gst_type", "Unregistered"); // Auto-set GST type
+                setSelectedType("Unregistered");
+                form.setFieldValue("address_details", [
+      {
+        address_type: "Registered Address",
+        name: "Billing Address",
+        building: "",
+        address_state: undefined,
+        street: "",
+        city: "",
+        district: "",
+        country: "India",
+        landmark: "",
+        pincode: "",
+      },
+    ]); // Update local state if used elsewhere
+              }}
+            >
               <Option value="Trade Payables - Sunday Creditors">
                 Trade Payables - Sunday Creditors
               </Option>
@@ -66,290 +251,522 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ formRef }) => {
         </Col>
       </Row>
 
-      {/* Business Details */}
-      <Divider orientation="left">Business Details</Divider>
-      <Row gutter={[16, 4]}>
-        <Col span={6}>
-          <Form.Item
-            label="GST Type"
-            name="gst_type"
-            rules={[{ required: true, message: "GST Type is required" }]}
-          >
-            <Select placeholder="GST TYPE">
-              <Option value="Unregistered">Unregistered</Option>
-              <Option value="Regular">Regular</Option>
-              <Option value="Composition">Composition</Option>
-              <Option value="Import">Import</Option>
-              <Option value="SEZ">SEZ</Option>
-              <Option value="Deemed Export/ Import">Deemed Export/ Import</Option>
-            </Select>
-          </Form.Item>
-        </Col>
-        <Col span={6}>
-          <Form.Item label="GSTIN" name="gst_no">
-            <Input placeholder="00AABCC1234D1ZZ" />
-          </Form.Item>
-        </Col>
-        <Col span={6}>
-          <Form.Item label="PAN Card" name="pan_no">
-            <Input placeholder="AABCC1234D" disabled />
-          </Form.Item>
-        </Col>
-        <Col span={6}>
-          <Form.Item
-            label="State"
-            name="state"
-            rules={[{ required: true, message: "State is required" }]}
-          >
-            <Select placeholder="State" showSearch>
-              <Option value="West Bengal">West Bengal</Option>
-              <Option value="Maharashtra">Maharashtra</Option>
-              <Option value="Punjab">Punjab</Option>
-              <Option value="Rajasthan">Rajasthan</Option>
-              <Option value="Delhi">Delhi</Option>
-            </Select>
-          </Form.Item>
-        </Col>
-        <Col span={6}>
-          <Form.Item label="Business Type" name="bussiness_type">
-            <Select placeholder="Select Type" showSearch>
-              <Option value="Private Limited">Private Limited</Option>
-              <Option value="Public Limited">Public Limited</Option>
-              <Option value="Sole Propprietorship">Sole Propprietorship</Option>
-              <Option value="Partnership">Partnership</Option>
-              <Option value="LLP">LLP</Option>
-              <Option value="LLC">LLC</Option>
-            </Select>
-          </Form.Item>
-        </Col>
-        <Col span={6}>
-          <Form.Item label="Business Nature" name="bussiness_nature">
-            <Select placeholder="Select Nature">
-              <Option value="Unspecified">Unspecified</Option>
-              <Option value="Manufacturer">Manufacturer</Option>
-              <Option value="Service Provider">Service Provider</Option>
-              <Option value="Trader">Trader</Option>
-            </Select>
-          </Form.Item>
-        </Col>
-        <Col span={6}>
-          <Form.Item label="Website" name="website">
-            <Input placeholder="https://www.example.com" />
-          </Form.Item>
-        </Col>
-        <Col span={6}>
-          <Form.Item label="IEC" name="iec">
-            <Input placeholder="IEC Code" />
-          </Form.Item>
-        </Col>
-        <Col span={6}>
-          <Form.Item label="MSME Number" name="msme_no">
-            <Input placeholder="XX-00-0123456" addonBefore="UDYAM" />
-          </Form.Item>
-        </Col>
-        <Col span={6}>
-          <Form.Item name="istransporter">
-            <div>Is Transporter</div>
-            <Checkbox style={{ paddingTop: 10 }} />
-          </Form.Item>
-        </Col>
-      </Row>
-
-      {/* Contact Details */}
-      <Divider orientation="left">Contact Details</Divider>
-      <Form.List name="contact_details">
-        {(fields, { add, remove }) => {
-          contactAddRef.current = () => {
-            if (fields.length === 0 && contactFields === 0) {
-              add();
-              setContactFields(1);
-            }
-          };
-          return (
-            <>
-              {fields.map(({ key, name, ...restField }) => (
-                <Space key={key} style={{ display: "flex", marginBottom: 8 }} align="baseline">
-                  <Row gutter={[16, 4]}>
-                    <Col span={4}>
-                      <Form.Item label="Name" {...restField} name={[name, "contact_name"]}>
-                        <Input placeholder="Name" />
-                      </Form.Item>
-                    </Col>
-                    <Col span={4}>
-                      <Form.Item label="Designation" {...restField} name={[name, "designation"]}>
-                        <Input placeholder="Designation" />
-                      </Form.Item>
-                    </Col>
-                    <Col span={4}>
-                      <Form.Item label="Phone No." {...restField} name={[name, "phone_no"]}>
-                        <Input placeholder="9876543210" />
-                      </Form.Item>
-                    </Col>
-                    <Col span={4}>
-                      <Form.Item label="Email" {...restField} name={[name, "email"]}>
-                        <Input placeholder="user@exam.com" />
-                      </Form.Item>
-                    </Col>
-                    <Col span={4}>
-                      <Form.Item label="CC" {...restField} name={[name, "cc"]}>
-                        <Input placeholder="user@exam.com" />
-                      </Form.Item>
-                    </Col>
-                    <DeleteOutlined
-                      style={{ paddingLeft: 10, paddingTop: 30 }}
-                      onClick={() => {
-                        remove(name);
-                        setContactFields(prev => prev - 1);
-                      }}
+      {/* Bussiness Details */}
+      {[
+        "Trade Payables - Sunday Creditors",
+        "Trade Receiveable - Sunday Debitors",
+      ].includes(display) ? (
+        <>
+          <Divider orientation="left" orientationMargin="0">
+            Bussiness Details
+          </Divider>
+          <Row gutter={[16, 4]}>
+            <Col span={6}>
+              <Form.Item
+                label="GST Type"
+                name="gst_type"
+                rules={[
+                  {
+                    required: true,
+                    message: "GST Type is required",
+                  },
+                ]}
+              >
+                <Select
+                  placeholder="GST TYPE"
+                  onChange={handleTypeChange}
+                  value={selectedType}
+                >
+                  <Option value="Unregistered">Unregistered</Option>
+                  <Option value="Regular">Regular</Option>
+                  <Option value="Composition">Composition</Option>
+                  <Option value="Import/Export">Import/Export</Option>
+                  <Option value="SEZ">SEZ</Option>
+                  <Option value="Deemed Export/ Import">
+                    Deemed Export/ Import
+                  </Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            {display_two != "Import/Export" ? (
+              <>
+                <Col span={6}>
+                  <Form.Item
+                    label="GSTIN"
+                    name="gst_no"
+                    rules={[
+                      {
+                        pattern: /^\d{2}[A-Z]{5}\d{4}[A-Z][1][Z][\dA-Z]$/,
+                        message: "Please enter a valid GSTIN",
+                      },
+                    ]}
+                  >
+                    <Input
+                      placeholder="00AABCC1234D1ZZ"
+                      allowClear
+                      disabled={selectedType === "Unregistered"}
+                      // onChange={handleChangePan &&}
+                      onChange={handleGSTInputChange}
+                      value={ggst}
                     />
-                  </Row>
-                </Space>
-              ))}
-              <Form.Item>
-                <Button
-                  type="link"
-                  icon={<PlusOutlined />}
-                  onClick={() => {
-                    if (contactFields < 5) {
-                      add();
-                      setContactFields(prev => prev + 1);
-                    }
-                  }}
-                  disabled={contactFields >= 5}
-                >
-                  Add Contact
-                </Button>
+                  </Form.Item>
+                </Col>
+              </>
+            ) : null}
+            {/*  */}
+            <Col span={6}>
+              <Form.Item
+                label="PAN Card "
+                name="pan_no"
+                rules={[
+                  {
+                    pattern: /^[A-Z]{5}[\d]{4}[A-Z]$/,
+                    message: "Enter valid 10 alphanumeric PAN number",
+                  },
+                  {
+                    min: 10,
+                    max: 10,
+                    message: "PAN No. must be 10 characters long",
+                  },
+                ]}
+              >
+                <Input
+                  placeholder="AABCC1234D"
+                  value={gpan}
+                  disabled={
+                    selectedType === "Regular" ||
+                    selectedType === "Composition" ||
+                    selectedType === "SEZ" ||
+                    selectedType === "Deemed Export/ Import"
+                  }
+                />
               </Form.Item>
-            </>
-          );
-        }}
-      </Form.List>
+            </Col>
+            {display_two != "Import/Export" ? (
+              <>
+                <Col span={6}>
+                  <Form.Item
+                    label="State"
+                    name="states"
+                    rules={[
+                      {
+                        required: true,
+                        message: "State is required",
+                      },
+                    ]}
+                  >
+                    <Select
+                      placeholder="Select State"
+                      disabled={
+                        selectedType === "Regular" ||
+                        selectedType === "Composition" ||
+                        selectedType === "SEZ" ||
+                        selectedType === "Deemed Export/ Import"
+                      }
+                    >
+                      {indianStates.map((state) => (
+                        <Option key={state.id} value={state.name}>
+                          {state.name}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </>
+            ) : null}
+            {/*  */}
+            <Col span={6}>
+              <Form.Item label="Bussiness Type" name="bussiness_type">
+                <Select placeholder="Select Type" showSearch>
+                  <Option value="Private Limited">Private Limited</Option>
+                  <Option value="Public Limited">Public Limited</Option>
+                  <Option value="Sole Propprietorship">
+                    Sole Propprietorship
+                  </Option>
+                  <Option value="Partnership">Partnership</Option>
+                  <Option value="LLP">LLP</Option>
+                  <Option value="LLC">LLC</Option>
+                  <Option value="Joint Ventures">Joint Ventures</Option>
+                  <Option value="Hindu Undivided Family">
+                    Hindu Undivided Family
+                  </Option>
+                  <Option value="NGO">NGO</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item label="Bussiness Nature" name="bussiness_nature">
+                <Select placeholder="Select Nature" mode="multiple">
+                  <Option value="Unspecified">Unspecified</Option>
+                  <Option value="Manufacturer">Manufacturer</Option>
+                  <Option value="Service Provider">Service Provider</Option>
+                  <Option value="Trader">Trader</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item
+                label="Website"
+                name="website"
+                rules={[
+                  {
+                    type: "url",
+                    message: "Please enter a valid URL",
+                  },
+                  {
+                    min: 10,
+                    max: 50,
+                    message:
+                      "Please enter a valid URL having minimum 10 or maximum 50 length",
+                  },
+                ]}
+              >
+                <Input placeholder="https://www.example.com" />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item
+                label="IEC"
+                name="iec"
+                rules={[
+                  {
+                    pattern: /^[A-Z\d]{10}$/,
+                    message: "Enter valid 10 alphanumeric IEC number",
+                  },
+                  {
+                    max: 10,
+                    min: 10,
+                    message: "Length must be 10 characters long",
+                  },
+                ]}
+              >
+                <Input placeholder="IEC Code" />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item
+                label="MSME Number"
+                name="msme_no"
+                rules={[
+                  {
+                    pattern: /^[A-Z]{2}-[\d]{2}-[\d]{7}$/,
+                    message: "Enter valid 19 digit MSME No. including '-'",
+                  },
+                ]}
+              >
+                <Input placeholder="XX-00-0123456" addonBefore="UDYAM-" />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item name="istransporter" valuePropName="checked">
+                <div>Is Transporter</div>
+                <Checkbox style={{ paddingTop: 10 }} />
+              </Form.Item>
+            </Col>
+          </Row>
 
-      {/* Address Details */}
-      <Divider orientation="left">Address Details</Divider>
-      <Form.List name="address_details">
-        {(fields, { add, remove }) => {
-          addressAddRef.current = () => {
-            if (fields.length === 0 && addressFields === 0) {
-              add();
-              setAddressFields(1);
-            }
-          };
-          return (
-            <>
-              {fields.map(({ key, name, ...restField }) => (
-                <Space key={key} style={{ display: "flex", marginBottom: 8 }} align="baseline">
-                  <Row gutter={[16, 4]}>
-                    <Col span={6}>
-                      <Form.Item
-                        label="Address Type"
-                        {...restField}
-                        name={[name, "address_type"]}
-                      >
-                        <Select placeholder="Select Type">
-                          <Option value="Registered Address">Registered Address</Option>
-                          <Option value="Bussiness Address">Bussiness Address</Option>
-                          <Option value="Branch Address">Branch Address</Option>
-                          <Option value="Unit Address">Unit Address</Option>
-                          <Option value="Godown Address">Godown Address</Option>
-                        </Select>
-                      </Form.Item>
-                      <Form.Item
-                        label="Name"
-                        {...restField}
-                        name={[name, "name"]}
-                        rules={[{ required: true, message: "Name is required" }]}
-                      >
-                        <Input />
-                      </Form.Item>
-                    </Col>
-                    <Col span={18}>
-                      <Row gutter={[8, 4]}>
-                        <Col span={8}>
-                          <Form.Item {...restField} name={[name, "building"]}>
-                            <Input placeholder="Building" />
-                          </Form.Item>
-                        </Col>
-                        <Col span={8}>
-                          <Form.Item {...restField} name={[name, "street"]}>
-                            <Input placeholder="Street" />
-                          </Form.Item>
-                        </Col>
-                        <Col span={8}>
-                          <Form.Item {...restField} name={[name, "landmark"]}>
-                            <Input placeholder="Landmark" />
-                          </Form.Item>
-                        </Col>
-                        <Col span={8}>
-                          <Form.Item {...restField} name={[name, "city"]}>
-                            <Input placeholder="City" />
-                          </Form.Item>
-                        </Col>
-                        <Col span={8}>
-                          <Form.Item {...restField} name={[name, "district"]}>
-                            <Input placeholder="District" />
-                          </Form.Item>
-                        </Col>
-                        <Col span={8}>
-                          <Form.Item {...restField} name={[name, "pincode"]}>
-                            <Input placeholder="Pincode" />
-                          </Form.Item>
-                        </Col>
-                        <Col span={8}>
-                          <Form.Item {...restField} name={[name, "address_state"]}>
-                            <Select placeholder="State">
-                              <Option value="West Bengal">West Bengal</Option>
-                              <Option value="Maharashtra">Maharashtra</Option>
-                              <Option value="Punjab">Punjab</Option>
-                              <Option value="Rajasthan">Rajasthan</Option>
-                              <Option value="Delhi">Delhi</Option>
-                            </Select>
-                          </Form.Item>
-                        </Col>
-                        <Col span={8}>
-                          <Form.Item
-                            {...restField}
-                            name={[name, "country"]}
-                            rules={[{ required: true, message: "Country is required" }]}
-                          >
-                            <Select placeholder="Country">
-                              <Option value="India">India</Option>
-                            </Select>
-                          </Form.Item>
-                        </Col>
+          {/* Contact Details */}
+
+          <Divider orientation="left" orientationMargin="0">
+            Contact Details
+          </Divider>
+          <Form.List
+            name="contact_details"
+            rules={[
+              {
+                validator: async (_, value) => {
+                  if (value && value.length > 5) {
+                    return Promise.reject(
+                      new Error("Not more than 5 Contact Details")
+                    );
+                  }
+                  return Promise.resolve();
+                },
+              },
+            ]}
+          >
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name, ...restField }) => (
+                  <Space
+                    key={key}
+                    style={{ display: "flex", marginBottom: 8 }}
+                    align="baseline"
+                  >
+                    <Row gutter={[16, 4]}>
+                      <Col span={4}>
+                        <Form.Item
+                          label="Name"
+                          {...restField}
+                          name={[name, "contact_name"]}
+                          rules={[
+                            {
+                              min: 3,
+                              max: 30,
+                              message:
+                                "Length must be Minimum 3 or Maximum 30 characters",
+                            },
+                          ]}
+                        >
+                          <Input placeholder="Name" />
+                        </Form.Item>
+                      </Col>
+                      <Col span={4}>
+                        <Form.Item
+                          label="Designation"
+                          {...restField}
+                          name={[name, "designation"]}
+                          rules={[
+                            {
+                              min: 3,
+                              max: 30,
+                              message:
+                                "Length must be Minimum 3 or Maximum 30 characters",
+                            },
+                          ]}
+                        >
+                          <Input placeholder="Designation" />
+                        </Form.Item>
+                      </Col>
+                      <Col span={4}>
+                        <Form.Item
+                          label="Phone No."
+                          {...restField}
+                          name={[name, "phone_no"]}
+                          rules={[
+                            {
+                              min: 0,
+                              max: 10,
+                              message: "Length must be of 10 digits long",
+                            },
+                            {
+                              pattern: /^[6-9][\d]{9}$/,
+                              message: "Enter a valid phone number",
+                            },
+                          ]}
+                        >
+                          <Input placeholder="9876543210" />
+                        </Form.Item>
+                      </Col>
+                      <Col span={4}>
+                        <Form.Item
+                          label="Email"
+                          {...restField}
+                          name={[name, "email"]}
+                          rules={[
+                            {
+                              min: 10,
+                              max: 80,
+                              message:
+                                "Length must be Minimum 10 or Maximum 80 characters",
+                            },
+                            {
+                              type: "email",
+                              message: "Enter valid email address",
+                            },
+                          ]}
+                        >
+                          <Input placeholder="user@exam.com" />
+                        </Form.Item>
+                      </Col>
+                      <Col span={4}>
+                        <Form.Item
+                          label="CC"
+                          {...restField}
+                          name={[name, "cc"]}
+                          rules={[
+                            {
+                              min: 10,
+                              max: 250,
+                              message:
+                                "Length must be Minimum 10 or Maximum 250 characters",
+                            },
+                            {
+                              type: "email",
+                              message: "Enter valid email address",
+                            },
+                          ]}
+                        >
+                          <Input placeholder="user@exam.com" />
+                        </Form.Item>
+                      </Col>
+                      {fields.length > 1 && (
                         <DeleteOutlined
-                          style={{ paddingLeft: 10 }}
-                          onClick={() => {
-                            remove(name);
-                            setAddressFields(prev => prev - 1);
-                          }}
+                          style={{ paddingLeft: 10, paddingTop: 30 }}
+                          onClick={() => remove(name)}
                         />
-                      </Row>
-                    </Col>
-                  </Row>
-                </Space>
-              ))}
-              <Form.Item>
-                <Button
-                  type="link"
-                  icon={<PlusOutlined />}
-                  onClick={() => {
-                    if (addressFields < 5) {
-                      add();
-                      setAddressFields(prev => prev + 1);
-                    }
-                  }}
-                  disabled={addressFields >= 5}
-                >
-                  Add Address
-                </Button>
-              </Form.Item>
-            </>
-          );
-        }}
-      </Form.List>
+                      )}
+                    </Row>
+                  </Space>
+                ))}
+                <Form.Item>
+                  <Button
+                    type="link"
+                    onClick={() => add()}
+                    icon={<PlusOutlined />}
+                    disabled={fields.length >= 5}
+                  >
+                    Add field
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
 
-      
+          {/* Address Details */}
+
+          <Divider orientation="left" orientationMargin="0">
+            Address Details
+          </Divider>
+          <Form.List name="address_details">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name, ...restField }) => (
+                  <Space
+                    key={key}
+                    style={{ display: "flex", marginBottom: 8 }}
+                    align="baseline"
+                  >
+                    <Row gutter={[16, 4]}>
+                      <Col span={8}>
+                        <Form.Item
+                          label="Address Type"
+                          {...restField}
+                          name={[name, "address_type"]}
+                        >
+                          <Select
+                            placeholder="Select Type"
+                            style={{ marginBottom: 5 }}
+                          >
+                            <Option value="Registered Address">
+                              Registered Address
+                            </Option>
+                            <Option value="Bussiness Address">
+                              Bussiness Address
+                            </Option>
+                            <Option value="Branch Address">
+                              Branch Address
+                            </Option>
+                            <Option value="Unit Address">Unit Address</Option>
+                            <Option value="Godown Address">
+                              Godown Address
+                            </Option>
+                          </Select>
+                        </Form.Item>
+                        <Form.Item
+                          label="Address Name"
+                          {...restField}
+                          name={[name, "name"]}
+                          rules={[
+                            {
+                              required: true,
+                              message: "Name is required",
+                            },
+                          ]}
+                        >
+                          <Input />
+                        </Form.Item>
+                      </Col>
+                      <Col span={16}>
+                        <Row gutter={[0, 1]}>
+                          <Col span={24} style={{ paddingBottom: 7 }}>
+                            Address Details
+                          </Col>
+                          <Col span={8}>
+                            <Form.Item {...restField} name={[name, "building"]}>
+                              <Input placeholder="Building" />
+                            </Form.Item>
+                          </Col>
+                          <Col span={8}>
+                            <Form.Item {...restField} name={[name, "street"]}>
+                              <Input placeholder="Street" />
+                            </Form.Item>
+                          </Col>
+                          <Col span={8}>
+                            <Form.Item {...restField} name={[name, "landmark"]}>
+                              <Input placeholder="Landmark" />
+                            </Form.Item>
+                          </Col>
+                          <Col span={8}>
+                            <Form.Item {...restField} name={[name, "city"]}>
+                              <Input placeholder="City" />
+                            </Form.Item>
+                          </Col>
+                          <Col span={8}>
+                            <Form.Item {...restField} name={[name, "district"]}>
+                              <Input placeholder="District" />
+                            </Form.Item>
+                          </Col>
+                          <Col span={8}>
+                            <Form.Item
+                              {...restField}
+                              name={[name, "pincode"]}
+                              rules={[
+                                {
+                                  min: 6,
+                                  max: 6,
+                                  message:
+                                    "Pincode Length must be 6 digits long",
+                                },
+                              ]}
+                            >
+                              <Input placeholder="Pincode" />
+                            </Form.Item>
+                          </Col>
+                          <Col span={8}>
+                            <Form.Item
+                              {...restField}
+                              name={[name, "address_state"]}
+                            >
+                              <Select placeholder="Select State" showSearch allowClear>
+                                {indianStates.map((state) => (
+                                  <Option key={state.id} value={state.name}>
+                                    {state.name}
+                                  </Option>
+                                ))}
+                              </Select>
+                            </Form.Item>
+                          </Col>
+                          <Col span={8}>
+                            <Form.Item
+                              {...restField}
+                              name={[name, "country"]}
+                              rules={[
+                                {
+                                  required: true,
+                                  message: "Country is required",
+                                },
+                              ]}
+                            >
+                              <Select placeholder="Country" showSearch allowClear>
+                                <Option value="India">India</Option>
+                              </Select>
+                            </Form.Item>
+                          </Col>
+                          <DeleteOutlined
+                            style={{ paddingLeft: 30 }}
+                            onClick={() => remove(name)}
+                          />
+                        </Row>
+                      </Col>
+                      <Divider />
+                    </Row>
+                  </Space>
+                ))}
+                <Form.Item>
+                  <Button
+                    type="link"
+                    onClick={() => add()}
+                    icon={<PlusOutlined />}
+                  >
+                    Add field
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
+        </>
+      ) : null}
     </Form>
   );
 };
