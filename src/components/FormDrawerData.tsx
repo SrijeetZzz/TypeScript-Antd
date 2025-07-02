@@ -4,12 +4,15 @@ import { CloseOutlined, PlusOutlined } from "@ant-design/icons";
 import ProfileForm from "./CapsiBillingForm";
 import type { Profile } from "../interfaces/Profile";
 
+
 const ProfileDrawerWrapper: React.FC = () => {
   const [open, setOpen] = useState(false);
 
   const showDrawer = () => setOpen(true);
   const onClose = () => setOpen(false);
   const [form] = Form.useForm<Profile>();
+
+
 
   return (
     <>
@@ -47,8 +50,10 @@ const ProfileDrawerWrapper: React.FC = () => {
               </Button>
               <Button
                 type="primary"
+                htmlType="submit"
                 onClick={() => {
                   form.submit();
+                 
                 }}
               >
                 Submit
@@ -57,8 +62,11 @@ const ProfileDrawerWrapper: React.FC = () => {
           </Row>
         }
       >
+        
         <ProfileForm onSuccess={onClose} onClose={onClose} form={form} />
+        
       </Drawer>
+     
     </>
   );
 };

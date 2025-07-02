@@ -1,5 +1,5 @@
 export const indianStates = [
-  {
+    {
         "name": "Andaman and Nicobar Islands",
         "id": 35
     },
@@ -160,38 +160,6 @@ export const indianStates = [
 
 export type IndianState = (typeof indianStates)[number];
 
-// export interface Profile{
-//     party_name: string;
-//     alias:string;
-//     party_grp: 'Trade Payables - Sunday Creditors' | 'Trade Receiveable - Sunday Debitors';
-//     gst_type:'Unregistered' | 'Regular' | 'Composition' | 'Export/Import' | 'SEZ' | 'Deemed Export/ Import';
-//     gst_no: string;
-//     pan_no:string;
-//     states: IndianState;
-//     bussiness_type: 'Private Limited' | 'Public Limited' | 'Sole Propprietorship' | 'Partnership' | 'LLP' | 'LLC' | 'Joint Ventures' | 'Hindu Undivided Family' | 'NGO'
-//     bussiness_nature : 'Unspecified' | 'Manufacturer' | 'Service Provider' | 'Trader';
-//     website: string;
-//     iec: number;
-//     msme_no: string;
-//     istransporter: boolean;
-//     contact_name: string;
-//     designation: string;
-//     phone_no: number;
-//     email: string;
-//     cc: string;
-//     address_type: 'Registered Address' | 'Bussiness Address' | 'Branch Address'| 'Unit Address' | 'Godown Address';
-//     name:string;
-//     building: string;
-//     street:string;
-//     landmark: string;
-//     city:string;
-//     district: string;
-//     pincode:number;
-//     address_state: IndianState;
-//     country: 'India';
-    
-
-// }
 export interface ContactDetail {
   contact_name: string;
   designation: string;
@@ -220,14 +188,13 @@ export interface Profile {
   gst_type: 'Unregistered' | 'Regular' | 'Composition' | 'Export/Import' | 'SEZ' | 'Deemed Export/ Import';
   gst_no: string;
   pan_no: string;
-  state?: IndianState; // optional if needed separately
+  state: IndianState; 
   bussiness_type: 'Private Limited' | 'Public Limited' | 'Sole Propprietorship' | 'Partnership' | 'LLP' | 'LLC' | 'Joint Ventures' | 'Hindu Undivided Family' | 'NGO';
   bussiness_nature: 'Unspecified' | 'Manufacturer' | 'Service Provider' | 'Trader';
   website: string;
   iec: number;
   msme_no: string;
   istransporter: boolean;
-
   contact_details: ContactDetail[];
   address_details: AddressDetail[];
 }

@@ -1,10 +1,12 @@
 import React from 'react';
 import ProfileDrawerWrapper from './components/FormDrawerData';
 import './App.css';
+import ProfilesTable from './components/UserTable';
 
 const App: React.FC = () => {
   return (
     <div style={{ padding: 24 }}>
+      <ProfilesTable/>
       <ProfileDrawerWrapper />
     </div>
   );

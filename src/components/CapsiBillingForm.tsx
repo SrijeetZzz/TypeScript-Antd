@@ -19,6 +19,7 @@ interface ProfileFormProps {
   onSuccess?: () => void;
   onClose?: () => void;
   form: FormInstance<Profile>;
+  profileKey?: string | null;   // <-- Add this prop
 }
 
 const ProfileForm: React.FC<ProfileFormProps> = ({
@@ -32,133 +33,74 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
   const [selectedType, setSelectedType] = useState("");
   const [ggst, setGgst] = useState("");
   const [gpan, setGpan] = useState("");
-  // const handleChangePan = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   const value = event.target.value;
 
-  //   if (value.length > 12) {
-  //     const val = value.slice(2, 12);
+  const handlePanAndStateChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = event.target.value;
+    if (value.length > 2) {
+      const code = value.slice(0, 2);
+      const state = indianStates.find((e) => e.id === parseInt(code));
+      const stateName = state?.name;
+      form.setFieldValue("state", stateName);
+    }
+    if (value.length > 12) {
+      const val = value.slice(2, 12);
+      form.setFieldValue("pan_no", val);
+    } else {
+      setGpan("");
+    }
+  };
 
-  //     form.setFieldValue("pan_no", val);
-  //   } else {
-  //     setGpan("");
-  //   }
-  // };
-//   const handleChangePan = (event: React.ChangeEvent<HTMLInputElement>) => {
-//   let value = event.target.value.toUpperCase(); // PAN must be uppercase
-//   if (value.length > 12) {
-//     value = value.slice(2, 12); // Only first 10 characters
-//   }
-//   setGpan(value); // Save to state
-//   form.setFieldValue("pan_no", value); // Update form value
-// };
-  // const handleChangePan = (e :string)=>{
-  //   const val = form.getFieldValue(e.value);
-  //   if(val.length>12){
-  //     form.setFieldValue(e, val.slice(2,12))
-  //   }
-  //   else{
-  //     form.setFieldValue(val,"")
-  //   }
-  // }
   const handleTypeChange = (value: string) => {
     setSelectedType(value);
   };
 
-  // const onFinish = (values: Profile) => {
-  //   console.log("Submitted: ", values);
-  //   form.resetFields();
-  //   onSuccess?.();
-  // };
-const onFinish = (values: Profile) => {
-  console.log("Submitted: ", values);
-
-  // Get current counter from localStorage or default to 1
-  const currentCount = parseInt(localStorage.getItem("profileCount") || "1");
-
-  // Store the values with key "Profile_1", "Profile_2", etc.
-  localStorage.setItem(`Profile_${currentCount}`, JSON.stringify(values));
-
-  // Increment and store the updated count
-  localStorage.setItem("profileCount", (currentCount + 1).toString());
-
-  form.resetFields();
-  onSuccess?.();
-};
-const getStateFromGST = (gst: string): string | undefined => {
-  if (gst.length < 2) return undefined;
-  const code = parseInt(gst.slice(0, 2));
-  const state = indianStates.find((s) => s.id === code);
-  return state?.name;
-};
-
-// const handleChangeGST = (event: React.ChangeEvent<HTMLInputElement>) => {
-//   const gstValue = event.target.value.toUpperCase();
-//   setGgst(gstValue);
-//   form.setFieldValue("gst_no", gstValue);
-
-//   const detectedState = getStateFromGST(gstValue);
-//   if (detectedState) {
-//     form.setFieldValue("states", detectedState);
-//   }
-// };
-const handleGSTInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-  const gstValue = event.target.value.toUpperCase();
-
-  // Set GST in form and local state
-  setGgst(gstValue);
-  form.setFieldValue("gst_no", gstValue);
-
-  // Extract and set PAN (characters 3–12 of GST)
-  const pan = gstValue.slice(2, 12);
-  if (pan.length === 10) {
-    setGpan(pan);
-    form.setFieldValue("pan_no", pan);
-  } else {
-    setGpan("");
-    form.setFieldValue("pan_no", "");
-  }
-
-  // Extract and set State from first 2 digits
-  const detectedState = getStateFromGST(gstValue);
-  if (detectedState) {
-    form.setFieldValue("state", detectedState);
-     // optional for address
-  }
-};
-
+  const onFinish = (values: Profile) => {
+    console.log("Submitted: ", values);
+    const count = parseInt(localStorage.getItem("profileCount") || "0");
+    localStorage.setItem(`${count + 1}`, JSON.stringify(values));
+    localStorage.setItem("profileCount", (count + 1).toString());
+    form.resetFields();
+    onSuccess?.();
+  };
 
   return (
     <Form
       form={form}
       layout="vertical"
       onFinish={onFinish}
-      onFinishFailed={(errorInfo) => {
-      console.log("Validation Failed:", errorInfo);
-  }}
       initialValues={{
+        gst_no: "",
+        pan_no: "",
+        alias: "",
+        website: "",
+        iec: "",
+        msme_no: "",
+        bussiness_type: "",
+        bussiness_nature: null,
+        istransporter: false,
         contact_details: [
           {
             contact_name: "",
             designation: "",
-            phone_no: "",
+            phone_no: null,
             email: "",
             cc: "",
           },
         ],
-        address_details: [
-    {
-      address_type: undefined,
-      building: undefined,
-      address_state: undefined,
-      street: undefined,
-      name: undefined,
-      city: undefined,
-      district: undefined,
-      country: undefined,
-      landmark: undefined,
-      pincode: undefined,
-    },
-  ],
+        address_details:[
+          {
+            building:"",
+            street:"",
+            landmark:"",
+            city:"",
+            district:"",
+            pincode:null,
+            address_state:"",
+            
+          }
+        ]
       }}
     >
       {/* Add party */}
@@ -220,24 +162,15 @@ const handleGSTInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
           >
             <Select
               showSearch
-              onChange={(value) => {
-                form.setFieldValue("party_grp", value);
-                form.setFieldValue("gst_type", "Unregistered"); // Auto-set GST type
+              onChange={() => {
+                form.setFieldValue("gst_type", "Unregistered");
                 setSelectedType("Unregistered");
                 form.setFieldValue("address_details", [
-      {
-        address_type: "Registered Address",
-        name: "Billing Address",
-        building: "",
-        address_state: undefined,
-        street: "",
-        city: "",
-        district: "",
-        country: "India",
-        landmark: "",
-        pincode: "",
-      },
-    ]); // Update local state if used elsewhere
+                  {
+                    address_type: "Registered Address",
+                    name: "Billing Address",
+                  },
+                ]);
               }}
             >
               <Option value="Trade Payables - Sunday Creditors">
@@ -305,8 +238,7 @@ const handleGSTInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
                       placeholder="00AABCC1234D1ZZ"
                       allowClear
                       disabled={selectedType === "Unregistered"}
-                      // onChange={handleChangePan &&}
-                      onChange={handleGSTInputChange}
+                      onChange={handlePanAndStateChange}
                       value={ggst}
                     />
                   </Form.Item>
@@ -332,7 +264,6 @@ const handleGSTInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
               >
                 <Input
                   placeholder="AABCC1234D"
-                  value={gpan}
                   disabled={
                     selectedType === "Regular" ||
                     selectedType === "Composition" ||
@@ -347,7 +278,7 @@ const handleGSTInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
                 <Col span={6}>
                   <Form.Item
                     label="State"
-                    name="states"
+                    name="state"
                     rules={[
                       {
                         required: true,
@@ -718,7 +649,7 @@ const handleGSTInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
                               {...restField}
                               name={[name, "address_state"]}
                             >
-                              <Select placeholder="Select State" showSearch allowClear>
+                              <Select placeholder="Select State" showSearch>
                                 {indianStates.map((state) => (
                                   <Option key={state.id} value={state.name}>
                                     {state.name}
@@ -738,7 +669,7 @@ const handleGSTInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
                                 },
                               ]}
                             >
-                              <Select placeholder="Country" showSearch allowClear>
+                              <Select placeholder="Country" showSearch>
                                 <Option value="India">India</Option>
                               </Select>
                             </Form.Item>
