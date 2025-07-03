@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import type { Profile } from "../interfaces/Profile";
-import { indianStates } from "../interfaces/Profile";
+import {
+  indianStates,
+  addressType,
+  gstType,
+  bussinessType,
+  bussinessNature,
+} from "../interfaces/Profile";
 import {
   Form,
   Input,
@@ -19,18 +25,19 @@ interface ProfileFormProps {
   onSuccess?: () => void;
   onClose?: () => void;
   form: FormInstance<Profile>;
-  profileKey?: string | null;   // <-- Add this prop
+  selectedKey?: string | null;
 }
 
 const ProfileForm: React.FC<ProfileFormProps> = ({
   onSuccess,
-
   form,
+  selectedKey,
+  onClose
 }) => {
   const { Option } = Select;
   const display: string = Form.useWatch("party_grp", form);
-  const display_two: string = Form.useWatch("gst_type", form);
-  const [selectedType, setSelectedType] = useState("");
+  const display_two: number = Form.useWatch("gstType", form);
+  const [selectedType, setSelectedType] = useState<number>(0);
   const [ggst, setGgst] = useState("");
   const [gpan, setGpan] = useState("");
 
@@ -41,28 +48,35 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
     if (value.length > 2) {
       const code = value.slice(0, 2);
       const state = indianStates.find((e) => e.id === parseInt(code));
-      const stateName = state?.name;
-      form.setFieldValue("state", stateName);
+      const stateId = state?.id;
+      form.setFieldValue("state", stateId);
     }
     if (value.length > 12) {
       const val = value.slice(2, 12);
-      form.setFieldValue("pan_no", val);
+      form.setFieldValue("pan", val);
     } else {
       setGpan("");
     }
   };
 
-  const handleTypeChange = (value: string) => {
+  const handleTypeChange = (value: number) => {
     setSelectedType(value);
   };
 
   const onFinish = (values: Profile) => {
     console.log("Submitted: ", values);
-    const count = parseInt(localStorage.getItem("profileCount") || "0");
-    localStorage.setItem(`${count + 1}`, JSON.stringify(values));
-    localStorage.setItem("profileCount", (count + 1).toString());
+    console.log(display_two)
+    if (selectedKey) {
+      localStorage.setItem(selectedKey, JSON.stringify(values));
+    } else {
+      const count = parseInt(localStorage.getItem("profileCount") || "0");
+      localStorage.setItem(`${count + 1}`, JSON.stringify(values));
+      localStorage.setItem("profileCount", (count + 1).toString());
+    }
+    onSuccess?.();  
     form.resetFields();
-    onSuccess?.();
+    onClose?.()
+  
   };
 
   return (
@@ -71,34 +85,21 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
       layout="vertical"
       onFinish={onFinish}
       initialValues={{
-        gst_no: "",
-        pan_no: "",
-        alias: "",
-        website: "",
-        iec: "",
-        msme_no: "",
-        bussiness_type: "",
-        bussiness_nature: null,
+        iec: null,
+        website:null,
         istransporter: false,
-        contact_details: [
+        contactInformation: [
           {
-            contact_name: "",
-            designation: "",
-            phone_no: null,
-            email: "",
-            cc: "",
+            phone: null,
+            ccTo: null,
           },
         ],
-        address_details:[
+        addresses:[
           {
-            building:"",
-            street:"",
-            landmark:"",
-            city:"",
-            district:"",
-            pincode:null,
-            address_state:"",
-            
+            address:{
+              landmark:null,
+              state:0,
+            }
           }
         ]
       }}
@@ -109,7 +110,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
         <Col span={8}>
           <Form.Item
             label="Party Name"
-            name="party_name"
+            name="ledgerName"
             rules={[
               {
                 required: true,
@@ -127,7 +128,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
         <Col span={8}>
           <Form.Item
             label="Alias/Short Name"
-            name="alias"
+            name="aliasName"
             rules={[
               {
                 whitespace: true,
@@ -140,7 +141,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                   "Length must be Minimum 3 or Maximum 80 characters long",
               },
               {
-                pattern: /^[a-zA-Z\d][a-zA-Z\d\s.,()_&-]{3,80}$/,
+                pattern: /^[a-zA-Z\d][a-zA-Z\d\s.,()_&-]{2,80}$/,
                 message:
                   "Only alphanumeric with space and some special characters i.e. '_', '(', ')', '&', '-', '.' and ',' are allowed",
               },
@@ -163,12 +164,12 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
             <Select
               showSearch
               onChange={() => {
-                form.setFieldValue("gst_type", "Unregistered");
-                setSelectedType("Unregistered");
-                form.setFieldValue("address_details", [
+                form.setFieldValue("gstType", 1);
+                setSelectedType(1);
+                form.setFieldValue("addresses", [
                   {
-                    address_type: "Registered Address",
-                    name: "Billing Address",
+                    type: 0,
+                    addressName: "Billing Address",
                   },
                 ]);
               }}
@@ -197,7 +198,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
             <Col span={6}>
               <Form.Item
                 label="GST Type"
-                name="gst_type"
+                name="gstType"
                 rules={[
                   {
                     required: true,
@@ -206,27 +207,24 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                 ]}
               >
                 <Select
-                  placeholder="GST TYPE"
+                  placeholder="Select GST Type"
                   onChange={handleTypeChange}
                   value={selectedType}
                 >
-                  <Option value="Unregistered">Unregistered</Option>
-                  <Option value="Regular">Regular</Option>
-                  <Option value="Composition">Composition</Option>
-                  <Option value="Import/Export">Import/Export</Option>
-                  <Option value="SEZ">SEZ</Option>
-                  <Option value="Deemed Export/ Import">
-                    Deemed Export/ Import
-                  </Option>
+                  {gstType.map((gsttype) => (
+                    <Option key={gsttype.id} value={gsttype.id}>
+                      {gsttype.name}
+                    </Option>
+                  ))}
                 </Select>
               </Form.Item>
             </Col>
-            {display_two != "Import/Export" ? (
+            {display_two != 4 ? (
               <>
                 <Col span={6}>
                   <Form.Item
                     label="GSTIN"
-                    name="gst_no"
+                    name="gstin"
                     rules={[
                       {
                         pattern: /^\d{2}[A-Z]{5}\d{4}[A-Z][1][Z][\dA-Z]$/,
@@ -237,7 +235,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                     <Input
                       placeholder="00AABCC1234D1ZZ"
                       allowClear
-                      disabled={selectedType === "Unregistered"}
+                      disabled={selectedType === 1}
                       onChange={handlePanAndStateChange}
                       value={ggst}
                     />
@@ -249,7 +247,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
             <Col span={6}>
               <Form.Item
                 label="PAN Card "
-                name="pan_no"
+                name="pan"
                 rules={[
                   {
                     pattern: /^[A-Z]{5}[\d]{4}[A-Z]$/,
@@ -265,15 +263,15 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                 <Input
                   placeholder="AABCC1234D"
                   disabled={
-                    selectedType === "Regular" ||
-                    selectedType === "Composition" ||
-                    selectedType === "SEZ" ||
-                    selectedType === "Deemed Export/ Import"
+                    selectedType === 2 ||
+                    selectedType === 3 ||
+                    selectedType === 5 ||
+                    selectedType === 6
                   }
                 />
               </Form.Item>
             </Col>
-            {display_two != "Import/Export" ? (
+            {display_two != 4 ? (
               <>
                 <Col span={6}>
                   <Form.Item
@@ -289,15 +287,15 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                     <Select
                       placeholder="Select State"
                       disabled={
-                        selectedType === "Regular" ||
-                        selectedType === "Composition" ||
-                        selectedType === "SEZ" ||
-                        selectedType === "Deemed Export/ Import"
+                        selectedType === 2 ||
+                        selectedType === 3 ||
+                        selectedType === 5 ||
+                        selectedType === 6
                       }
                     >
-                      {indianStates.map((state) => (
-                        <Option key={state.id} value={state.name}>
-                          {state.name}
+                      {indianStates.map((states) => (
+                        <Option key={states.id} value={states.id}>
+                          {states.name}
                         </Option>
                       ))}
                     </Select>
@@ -307,31 +305,24 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
             ) : null}
             {/*  */}
             <Col span={6}>
-              <Form.Item label="Bussiness Type" name="bussiness_type">
+              <Form.Item label="Bussiness Type" name="bussinessType">
                 <Select placeholder="Select Type" showSearch>
-                  <Option value="Private Limited">Private Limited</Option>
-                  <Option value="Public Limited">Public Limited</Option>
-                  <Option value="Sole Propprietorship">
-                    Sole Propprietorship
-                  </Option>
-                  <Option value="Partnership">Partnership</Option>
-                  <Option value="LLP">LLP</Option>
-                  <Option value="LLC">LLC</Option>
-                  <Option value="Joint Ventures">Joint Ventures</Option>
-                  <Option value="Hindu Undivided Family">
-                    Hindu Undivided Family
-                  </Option>
-                  <Option value="NGO">NGO</Option>
+                  {bussinessType.map((bt) => (
+                    <Option key={bt.id} value={bt.id}>
+                      {bt.name}
+                    </Option>
+                  ))}
                 </Select>
               </Form.Item>
             </Col>
             <Col span={6}>
-              <Form.Item label="Bussiness Nature" name="bussiness_nature">
-                <Select placeholder="Select Nature" mode="multiple">
-                  <Option value="Unspecified">Unspecified</Option>
-                  <Option value="Manufacturer">Manufacturer</Option>
-                  <Option value="Service Provider">Service Provider</Option>
-                  <Option value="Trader">Trader</Option>
+              <Form.Item label="Bussiness Nature" name="businessNature">
+                <Select placeholder="Select Type" mode="multiple" showSearch>
+                  {bussinessNature.map((bn) => (
+                    <Option key={bn.id} value={bn.id}>
+                      {bn.name}
+                    </Option>
+                  ))}
                 </Select>
               </Form.Item>
             </Col>
@@ -377,7 +368,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
             <Col span={6}>
               <Form.Item
                 label="MSME Number"
-                name="msme_no"
+                name="msmeNo"
                 rules={[
                   {
                     pattern: /^[A-Z]{2}-[\d]{2}-[\d]{7}$/,
@@ -402,7 +393,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
             Contact Details
           </Divider>
           <Form.List
-            name="contact_details"
+            name="contactInformation"
             rules={[
               {
                 validator: async (_, value) => {
@@ -429,7 +420,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                         <Form.Item
                           label="Name"
                           {...restField}
-                          name={[name, "contact_name"]}
+                          name={[name, "name"]}
                           rules={[
                             {
                               min: 3,
@@ -463,7 +454,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                         <Form.Item
                           label="Phone No."
                           {...restField}
-                          name={[name, "phone_no"]}
+                          name={[name, "phone"]}
                           rules={[
                             {
                               min: 0,
@@ -504,7 +495,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                         <Form.Item
                           label="CC"
                           {...restField}
-                          name={[name, "cc"]}
+                          name={[name, "ccTo"]}
                           rules={[
                             {
                               min: 10,
@@ -549,7 +540,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           <Divider orientation="left" orientationMargin="0">
             Address Details
           </Divider>
-          <Form.List name="address_details">
+          <Form.List name="addresses">
             {(fields, { add, remove }) => (
               <>
                 {fields.map(({ key, name, ...restField }) => (
@@ -563,31 +554,23 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                         <Form.Item
                           label="Address Type"
                           {...restField}
-                          name={[name, "address_type"]}
+                          name={[name, "type"]}
                         >
                           <Select
                             placeholder="Select Type"
                             style={{ marginBottom: 5 }}
                           >
-                            <Option value="Registered Address">
-                              Registered Address
-                            </Option>
-                            <Option value="Bussiness Address">
-                              Bussiness Address
-                            </Option>
-                            <Option value="Branch Address">
-                              Branch Address
-                            </Option>
-                            <Option value="Unit Address">Unit Address</Option>
-                            <Option value="Godown Address">
-                              Godown Address
-                            </Option>
+                            {addressType.map((at) => (
+                              <Option key={at.id} value={at.id}>
+                                {at.name}
+                              </Option>
+                            ))}
                           </Select>
                         </Form.Item>
                         <Form.Item
                           label="Address Name"
                           {...restField}
-                          name={[name, "name"]}
+                          name={[name, "addressName"]}
                           rules={[
                             {
                               required: true,
@@ -647,11 +630,11 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                           <Col span={8}>
                             <Form.Item
                               {...restField}
-                              name={[name, "address_state"]}
+                              name={[name, "state"]}
                             >
                               <Select placeholder="Select State" showSearch>
                                 {indianStates.map((state) => (
-                                  <Option key={state.id} value={state.name}>
+                                  <Option key={state.id} value={state.id}>
                                     {state.name}
                                   </Option>
                                 ))}
@@ -670,7 +653,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                               ]}
                             >
                               <Select placeholder="Country" showSearch>
-                                <Option value="India">India</Option>
+                                <Option value="INDIA">India</Option>
                               </Select>
                             </Form.Item>
                           </Col>

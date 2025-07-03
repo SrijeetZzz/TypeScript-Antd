@@ -1,13 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ProfileDrawerWrapper from './components/FormDrawerData';
 import './App.css';
 import ProfilesTable from './components/UserTable';
-
+import { getProfile } from './utils/storeProfile';
+import type { Profile } from './interfaces/Profile';
+interface ProfileWithKey {
+  key: string;
+  data: Profile;
+}
 const App: React.FC = () => {
+
+    const [profiles, setProfiles] = useState<ProfileWithKey[]>([]);
   return (
     <div style={{ padding: 24 }}>
+      <ProfileDrawerWrapper onSuccess={() => {
+    setProfiles(getProfile()); // Reload data after submit
+  }} />
       <ProfilesTable/>
-      <ProfileDrawerWrapper />
+      
     </div>
   );
 };
