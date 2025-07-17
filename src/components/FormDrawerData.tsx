@@ -1,3 +1,4 @@
+
 // import React from "react";
 // import { Button, Drawer, Row, Space, Form } from "antd";
 // import { CloseOutlined } from "@ant-design/icons";
@@ -5,12 +6,16 @@
 // import type { Profile } from "../interfaces/Profile";
 
 // interface DrawerWrapperProps {
-//   onSuccess?: () => void;
-//   open: boolean;
-//   onClose: () => void;
+//   onSuccess?: () => void; // storing the data on submiison and showing the data //
+//   open: boolean;  // passing parent prop for opening the form //
+//   onClose: () => void;  // passing parent prop for closing the form //
 // }
 
-// const ProfileDrawerWrapper: React.FC<DrawerWrapperProps> = ({ onSuccess, open, onClose }) => {
+// const ProfileDrawerWrapper: React.FC<DrawerWrapperProps> = ({
+//   onSuccess,
+//   open,
+//   onClose,
+// }) => {
 //   const [form] = Form.useForm<Profile>();
 
 //   return (
@@ -20,7 +25,13 @@
 //       open={open}
 //       closable={false}
 //       title={
-//         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+//         <div
+//           style={{
+//             display: "flex",
+//             justifyContent: "space-between",
+//             alignItems: "center",
+//           }}
+//         >
 //           <span>Add Party</span>
 //           <Button type="text" icon={<CloseOutlined />} onClick={onClose} />
 //         </div>
@@ -28,10 +39,20 @@
 //       footer={
 //         <Row justify="end">
 //           <Space>
-//             <Button onClick={() => { form.resetFields(); onClose(); }}>
+//             <Button
+//               onClick={() => {
+//                 form.resetFields();
+//                 onClose();
+//               }}
+//             >
 //               Cancel
 //             </Button>
-//             <Button type="primary" onClick={() => form.submit()}>
+//             <Button
+//               type="primary"
+//               onClick={() => {
+//                 form.submit();
+//               }}
+//             >
 //               Submit
 //             </Button>
 //           </Space>
@@ -39,83 +60,92 @@
 //       }
 //     >
 //       <ProfileForm
+//         form={form}
+//         onClose={onClose}
 //         onSuccess={() => {
 //           form.resetFields();
 //           onSuccess?.();
 //         }}
-//         onClose={onClose}
-//         form={form}
 //       />
 //     </Drawer>
 //   );
 // };
 
 // export default ProfileDrawerWrapper;
-// ProfileDrawerWrapper.tsx
 
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { Button, Drawer, Row, Space, Form } from "antd";
-import { CloseOutlined, PlusOutlined } from "@ant-design/icons";
+import { CloseOutlined } from "@ant-design/icons";
 import ProfileForm from "./CapsiBillingForm";
 import type { Profile } from "../interfaces/Profile";
 
 interface DrawerWrapperProps {
+  mode: "add" | "edit";
+  open: boolean;
+  onClose: () => void;
   onSuccess?: () => void;
+  selectedKey?: string | null;
+  initialValues?: Profile | null;
 }
 
-const ProfileDrawerWrapper: React.FC<DrawerWrapperProps> = ({ onSuccess }) => {
-  const [open, setOpen] = useState(false);
+const ProfileDrawerWrapper: React.FC<DrawerWrapperProps> = ({
+  mode,
+  open,
+  onClose,
+  onSuccess,
+  selectedKey,
+  initialValues,
+}) => {
   const [form] = Form.useForm<Profile>();
 
-  const showDrawer = () => setOpen(true);
-  const onClose = () => setOpen(false);
+  useEffect(() => {
+    if (initialValues) {
+      form.setFieldsValue(initialValues);
+    } else {
+      form.resetFields();
+    }
+  }, [initialValues, form, open]);
 
   return (
-    <>
-      <Button
-        type="primary"
-        icon={<PlusOutlined />}
-        onClick={showDrawer}
-        style={{ marginBottom: 16 }}
-      >
-        Add Party
-      </Button>
-
-      <Drawer
-        width={900}
+    <Drawer
+      width={900}
+      onClose={onClose}
+      open={open}
+      closable={false}
+      title={
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span>{mode === "edit" ? "Edit Party" : "Add Party"}</span>
+          <Button type="text" icon={<CloseOutlined />} onClick={onClose} />
+        </div>
+      }
+      footer={
+        <Row justify="end">
+          <Space>
+            <Button
+              onClick={() => {
+                form.resetFields();
+                onClose();
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="primary" onClick={() => form.submit()}>
+              Submit
+            </Button>
+          </Space>
+        </Row>
+      }
+    >
+      <ProfileForm
+        form={form}
         onClose={onClose}
-        open={open}
-        closable={false}
-        title={
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span>Add Party</span>
-            <Button type="text" icon={<CloseOutlined />} onClick={onClose} />
-          </div>
-        }
-        footer={
-          <Row justify="end">
-            <Space>
-              <Button onClick={() => { form.resetFields(); onClose(); }}>
-                Cancel
-              </Button>
-              <Button type="primary" onClick={() => form.submit()}>
-                Submit
-              </Button>
-            </Space>
-          </Row>
-        }
-      >
-        <ProfileForm
-          onSuccess={() => {
-            form.resetFields();
-            onSuccess?.(); // notify parent to refresh
-            onClose();
-          }}
-          onClose={onClose}
-          form={form}
-        />
-      </Drawer>
-    </>
+        onSuccess={() => {
+          form.resetFields();
+          onSuccess?.();
+        }}
+        selectedKey={selectedKey}
+      />
+    </Drawer>
   );
 };
 

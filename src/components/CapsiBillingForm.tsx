@@ -22,24 +22,26 @@ import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import type { FormInstance } from "antd";
 
 interface ProfileFormProps {
-  onSuccess?: () => void;
-  onClose?: () => void;
-  form: FormInstance<Profile>;
-  selectedKey?: string | null;
+  onSuccess?: () => void;  // storing the data on submiison and showing the data //
+  onClose?: () => void; // passing parent prop for closing the form //
+  form: FormInstance<Profile>;  // passing instance of a form for submission //
+  selectedKey?: string | null;  // for editing data //
 }
 
 const ProfileForm: React.FC<ProfileFormProps> = ({
   onSuccess,
   form,
   selectedKey,
-  onClose
+
 }) => {
   const { Option } = Select;
   const display: string = Form.useWatch("party_grp", form);
   const display_two: number = Form.useWatch("gstType", form);
   const [selectedType, setSelectedType] = useState<number>(0);
   const [ggst, setGgst] = useState("");
-  const [gpan, setGpan] = useState("");
+  const [udyam,setUdyam]=useState<string>("");
+
+// fn for changing pan and state
 
   const handlePanAndStateChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -54,18 +56,30 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
     if (value.length > 12) {
       const val = value.slice(2, 12);
       form.setFieldValue("pan", val);
-    } else {
-      setGpan("");
     }
+    setGgst("")
   };
+
+// fn for storing for udyam value (as its an event)
+
+  const handleChangeUdyam=(event: React.ChangeEvent<HTMLInputElement>)=>{
+    const value = event.target.value;
+    setUdyam(value);
+  }
+
+//fn for setting the gst value
 
   const handleTypeChange = (value: number) => {
     setSelectedType(value);
   };
 
+// fn for form submission
+
   const onFinish = (values: Profile) => {
-    console.log("Submitted: ", values);
-    console.log(display_two)
+    const udyamId = 'UDYAM-' + udyam;
+    console.log(udyamId)
+    form.setFieldValue("msmeNo",udyamId);
+    values.msmeNo = udyamId;
     if (selectedKey) {
       localStorage.setItem(selectedKey, JSON.stringify(values));
     } else {
@@ -73,10 +87,8 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
       localStorage.setItem(`${count + 1}`, JSON.stringify(values));
       localStorage.setItem("profileCount", (count + 1).toString());
     }
-    onSuccess?.();  
     form.resetFields();
-    onClose?.()
-  
+    onSuccess?.();
   };
 
   return (
@@ -86,7 +98,8 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
       onFinish={onFinish}
       initialValues={{
         iec: null,
-        website:null,
+        website: null,
+        aliasName:"",
         istransporter: false,
         contactInformation: [
           {
@@ -94,14 +107,14 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
             ccTo: null,
           },
         ],
-        addresses:[
+        addresses: [
           {
-            address:{
-              landmark:null,
-              state:0,
-            }
-          }
-        ]
+            address: {
+              landmark: null,
+              state: 0,
+            },
+          },
+        ],
       }}
     >
       {/* Add party */}
@@ -147,7 +160,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
               },
             ]}
           >
-            <Input />
+            <Input  />
           </Form.Item>
         </Col>
         <Col span={8}>
@@ -162,6 +175,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
             ]}
           >
             <Select
+              placeholder="Please select A Party Group"
               showSearch
               onChange={() => {
                 form.setFieldValue("gstType", 1);
@@ -186,6 +200,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
       </Row>
 
       {/* Bussiness Details */}
+
       {[
         "Trade Payables - Sunday Creditors",
         "Trade Receiveable - Sunday Debitors",
@@ -303,7 +318,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                 </Col>
               </>
             ) : null}
-            {/*  */}
             <Col span={6}>
               <Form.Item label="Bussiness Type" name="bussinessType">
                 <Select placeholder="Select Type" showSearch>
@@ -376,13 +390,12 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                   },
                 ]}
               >
-                <Input placeholder="XX-00-0123456" addonBefore="UDYAM-" />
+                <Input placeholder="XX-00-0123456" addonBefore="UDYAM-" value={udyam} onChange={handleChangeUdyam}/>
               </Form.Item>
             </Col>
             <Col span={6}>
               <Form.Item name="istransporter" valuePropName="checked">
-                <div>Is Transporter</div>
-                <Checkbox style={{ paddingTop: 10 }} />
+               <Checkbox style={{ paddingTop: 10 }}>Is Transporter</Checkbox>
               </Form.Item>
             </Col>
           </Row>
@@ -409,7 +422,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           >
             {(fields, { add, remove }) => (
               <>
-                {fields.map(({ key, name, ...restField }) => (
+                {fields.map(({ key, name, }) => (
                   <Space
                     key={key}
                     style={{ display: "flex", marginBottom: 8 }}
@@ -419,7 +432,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                       <Col span={4}>
                         <Form.Item
                           label="Name"
-                          {...restField}
+                        
                           name={[name, "name"]}
                           rules={[
                             {
@@ -436,7 +449,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                       <Col span={4}>
                         <Form.Item
                           label="Designation"
-                          {...restField}
+                          
                           name={[name, "designation"]}
                           rules={[
                             {
@@ -453,7 +466,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                       <Col span={4}>
                         <Form.Item
                           label="Phone No."
-                          {...restField}
+                          
                           name={[name, "phone"]}
                           rules={[
                             {
@@ -473,7 +486,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                       <Col span={4}>
                         <Form.Item
                           label="Email"
-                          {...restField}
+                         
                           name={[name, "email"]}
                           rules={[
                             {
@@ -494,7 +507,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                       <Col span={4}>
                         <Form.Item
                           label="CC"
-                          {...restField}
+                          
                           name={[name, "ccTo"]}
                           rules={[
                             {
@@ -524,7 +537,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                 <Form.Item>
                   <Button
                     type="link"
-                    onClick={() => add()}
+                    onClick={() => add({ phone: null, ccTo: null })}
                     icon={<PlusOutlined />}
                     disabled={fields.length >= 5}
                   >
@@ -543,7 +556,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           <Form.List name="addresses">
             {(fields, { add, remove }) => (
               <>
-                {fields.map(({ key, name, ...restField }) => (
+                {fields.map(({ key, name }) => (
                   <Space
                     key={key}
                     style={{ display: "flex", marginBottom: 8 }}
@@ -553,7 +566,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                       <Col span={8}>
                         <Form.Item
                           label="Address Type"
-                          {...restField}
                           name={[name, "type"]}
                         >
                           <Select
@@ -569,7 +581,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                         </Form.Item>
                         <Form.Item
                           label="Address Name"
-                          {...restField}
                           name={[name, "addressName"]}
                           rules={[
                             {
@@ -587,33 +598,32 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                             Address Details
                           </Col>
                           <Col span={8}>
-                            <Form.Item {...restField} name={[name, "building"]}>
+                            <Form.Item name={[name, "building"]}>
                               <Input placeholder="Building" />
                             </Form.Item>
                           </Col>
                           <Col span={8}>
-                            <Form.Item {...restField} name={[name, "street"]}>
+                            <Form.Item name={[name, "street"]}>
                               <Input placeholder="Street" />
                             </Form.Item>
                           </Col>
                           <Col span={8}>
-                            <Form.Item {...restField} name={[name, "landmark"]}>
+                            <Form.Item name={[name, "landmark"]}>
                               <Input placeholder="Landmark" />
                             </Form.Item>
                           </Col>
                           <Col span={8}>
-                            <Form.Item {...restField} name={[name, "city"]}>
+                            <Form.Item name={[name, "city"]}>
                               <Input placeholder="City" />
                             </Form.Item>
                           </Col>
                           <Col span={8}>
-                            <Form.Item {...restField} name={[name, "district"]}>
+                            <Form.Item name={[name, "district"]}>
                               <Input placeholder="District" />
                             </Form.Item>
                           </Col>
                           <Col span={8}>
                             <Form.Item
-                              {...restField}
                               name={[name, "pincode"]}
                               rules={[
                                 {
@@ -628,10 +638,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                             </Form.Item>
                           </Col>
                           <Col span={8}>
-                            <Form.Item
-                              {...restField}
-                              name={[name, "state"]}
-                            >
+                            <Form.Item name={[name, "state"]}>
                               <Select placeholder="Select State" showSearch>
                                 {indianStates.map((state) => (
                                   <Option key={state.id} value={state.id}>
@@ -643,7 +650,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
                           </Col>
                           <Col span={8}>
                             <Form.Item
-                              {...restField}
                               name={[name, "country"]}
                               rules={[
                                 {

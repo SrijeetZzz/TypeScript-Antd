@@ -1,10 +1,11 @@
+
 // import { Button, Drawer, Form, Modal, Row, Space, Table } from "antd";
 // import { getProfile } from "../utils/storeProfile";
 // import { useEffect, useState } from "react";
 // import { gstType, type Profile } from "../interfaces/Profile";
-// import { CloseOutlined, DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
-// import ProfileForm from "./CapsiBillingForm";
-// import ProfileDrawerWrapper from "./FormDrawerData";
+// import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
+// import ProfileForm from "../components/CapsiBillingForm";
+// import ProfileDrawerWrapper from "../components/FormDrawerData";
 
 // interface ProfileWithKey {
 //   key: string;
@@ -16,7 +17,7 @@
 //   const [profiles, setProfiles] = useState<ProfileWithKey[]>([]);
 //   const [open, setOpen] = useState(false);
 //   const [openD, setOpenD] = useState(false);
-//   const [openAddDrawer, setOpenAddDrawer] = useState(false); // ✅ for add
+//   const [openAddDrawer, setOpenAddDrawer] = useState(false);
 //   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
 //   useEffect(() => {
@@ -25,27 +26,37 @@
 
 //   const tableData = profiles.map(({ key, data }) => ({ ...data, key }));
 
+//   //opening delete button (modal)
+
 //   const handleOpen = (key: string) => {
 //     setSelectedKey(key);
 //     setOpen(true);
 //   };
+
+//   // closing the modal
 
 //   const handleClose = () => {
 //     setOpen(false);
 //     setSelectedKey(null);
 //   };
 
+//   // closing the drawer
+
 //   const onCloseDrawer = () => {
 //     setOpenD(false);
 //     setSelectedKey(null);
 //   };
+
+//   //deleting the data (after modal clicked ok)
 
 //   const handleConfirmDelete = () => {
 //     if (!selectedKey) return;
 //     const raw = localStorage.getItem(selectedKey);
 //     if (!raw) return;
 //     localStorage.removeItem(selectedKey);
-//     setProfiles((prev) => prev.filter((profile) => profile.key !== selectedKey));
+//     setProfiles((prev) =>
+//       prev.filter((profile) => profile.key !== selectedKey)
+//     );
 //     const count = parseInt(localStorage.getItem("profileCount") || "0");
 //     if (count > 0) {
 //       const val = count - 1;
@@ -54,16 +65,24 @@
 //     handleClose();
 //   };
 
+//   //closes the drawer on successful submission
+
 //   const editSuccessDrawer = () => {
 //     setProfiles(getProfile());
 //     setSelectedKey(null);
 //     setOpenD(false);
 //   };
 
+//   //opening the drawer for edit button
+
 //   const showDrawer = (key: string) => {
 //     const selectedProfile = profiles.find((p) => p.key === key);
 //     if (selectedProfile) {
-//       form.setFieldsValue(selectedProfile.data);
+//       const updatedProfile = { ...selectedProfile.data };
+//       if (updatedProfile.msmeNo) {
+//         updatedProfile.msmeNo = updatedProfile.msmeNo.slice(6);
+//       }
+//       form.setFieldsValue(updatedProfile);
 //       setSelectedKey(key);
 //       setOpenD(true);
 //     }
@@ -76,7 +95,22 @@
 //       key: "key",
 //       render: (_: number, __: Profile, index: number) => <>{index + 1}</>,
 //     },
-//     { title: "Party Name", dataIndex: "ledgerName", key: "ledgerName" },
+//     {
+//       title: "Party Name",
+//       dataIndex: "ledgerName",
+//       key: "ledgerName",
+//       sorter:(a:Profile,b:Profile)=>{
+//         return a.ledgerName.localeCompare(b.ledgerName);
+//       },
+//       render: (_: any, record: Profile) => {
+//         return (
+//           <>
+//             {record.ledgerName}
+//             {record.aliasName?.length>0 ? `(${record.aliasName})` : ""}
+//           </>
+//         );
+//       },
+//     },
 //     { title: "Party Group", dataIndex: "party_grp", key: "party_grp" },
 //     {
 //       title: "Party Type",
@@ -84,11 +118,15 @@
 //       key: "gstType",
 //       render: (gstTypeId: number) => {
 //         const gst = gstType.find((item) => item.id === gstTypeId);
-//         return <>{gst?.name}</>;
+//         return gst?.name;
 //       },
 //     },
-//     { title: "Contact No", dataIndex: "phone", key: "phone" },
-//     { title: "Email", dataIndex: "email", key: "email" },
+//     { title: "Contact No", dataIndex: "phone", key: "phone", render:(_:any,record:Profile)=>{
+//         return record.contactInformation[0].phone;
+//     } },
+//     { title: "Email", dataIndex: "email", key: "email" , render:(_:any,record:Profile)=>{
+//         return record.contactInformation[0].email;
+//     }},
 //     {
 //       title: "Action",
 //       key: "action",
@@ -105,18 +143,21 @@
 //   ];
 
 //   return (
-//     <>
-//       {/* ✅ Add Party Button */}
+//     <div>
+
+//       {/*Add Party Button */}
+
 //       <Button
 //         type="primary"
 //         icon={<PlusOutlined />}
 //         onClick={() => setOpenAddDrawer(true)}
-//         style={{ marginBottom: 16 }}
+//         style={{ marginBottom: 16, display: "flex", alignItems: "left" }}
 //       >
 //         Add Party
 //       </Button>
 
-//       {/* ✅ Drawer for Adding Party */}
+//       {/*Drawer for Adding Party */}
+
 //       <ProfileDrawerWrapper
 //         open={openAddDrawer}
 //         onClose={() => setOpenAddDrawer(false)}
@@ -126,7 +167,16 @@
 //         }}
 //       />
 
-//       <Table dataSource={tableData} columns={columns} rowKey="ledgerName" />
+//       {/* Table */}
+
+//       <Table
+//         dataSource={tableData}
+//         columns={columns}
+//         rowKey="key"
+//         style={{ width: "100vw" }}
+//       />
+
+//       {/* Modal for deletion */}
 
 //       <Modal
 //         open={open}
@@ -137,12 +187,19 @@
 //         <p>Are you sure you want to delete Party?</p>
 //       </Modal>
 
+//       {/* Drawer for editing */}
+
 //       <Drawer
 //         width={900}
 //         title={
-//           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+//           <div
+//             style={{
+//               display: "flex",
+//               justifyContent: "space-between",
+//               alignItems: "center",
+//             }}
+//           >
 //             <span>Edit Party</span>
-//             {/* <Button type="text" icon={<CloseOutlined />} onClick={onCloseDrawer} /> */}
 //           </div>
 //         }
 //         open={openD}
@@ -150,7 +207,12 @@
 //         footer={
 //           <Row justify="end">
 //             <Space>
-//               <Button onClick={() => { form.resetFields(); setOpenD(false); }}>
+//               <Button
+//                 onClick={() => {
+//                   form.resetFields();
+//                   setOpenD(false);
+//                 }}
+//               >
 //                 Cancel
 //               </Button>
 //               <Button type="primary" onClick={() => form.submit()}>
@@ -160,6 +222,8 @@
 //           </Row>
 //         }
 //       >
+//         {/* Profile form component for Drawer */}
+
 //         <ProfileForm
 //           onSuccess={editSuccessDrawer}
 //           onClose={onCloseDrawer}
@@ -167,29 +231,18 @@
 //           selectedKey={selectedKey}
 //         />
 //       </Drawer>
-//     </>
+//     </div>
 //   );
 // };
 
 // export default ProfilesTable;
 
-
-// ProfilesTable.tsx
-
-import {
-  Button,
-  Drawer,
-  Form,
-  Modal,
-  Row,
-  Space,
-  Table
-} from "antd";
+import { Button, Modal, Row, Space, Table } from "antd";
 import { getProfile } from "../utils/storeProfile";
 import { useEffect, useState } from "react";
 import { gstType, type Profile } from "../interfaces/Profile";
-import { CloseOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import ProfileForm from "./CapsiBillingForm";
+import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
+import ProfileDrawerWrapper from "../components/FormDrawerData";
 
 interface ProfileWithKey {
   key: string;
@@ -197,63 +250,47 @@ interface ProfileWithKey {
 }
 
 const ProfilesTable: React.FC = () => {
-  const [form] = Form.useForm();
   const [profiles, setProfiles] = useState<ProfileWithKey[]>([]);
-  const [open, setOpen] = useState(false);
-  const [openD, setOpenD] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [refreshToggle, setRefreshToggle] = useState(false);
+  const [initialProfile, setInitialProfile] = useState<Profile | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerMode, setDrawerMode] = useState<"add" | "edit">("add");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     setProfiles(getProfile());
-  }, [refreshToggle]);
+  }, []);
 
-  const refreshProfiles = () => {
-    // setProfiles(getProfile());
-    setRefreshToggle((prev) => !prev);
-  };
+  const tableData = profiles.map(({ key, data }) => ({ ...data, key }));
 
-  const handleOpen = (key: string) => {
+  const handleDelete = (key: string) => {
     setSelectedKey(key);
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    setSelectedKey(null);
-  };
-
-  const onCloseDrawer = () => {
-    setOpenD(false);
-    setSelectedKey(null);
+    setDeleteModalOpen(true);
   };
 
   const handleConfirmDelete = () => {
     if (!selectedKey) return;
-    const raw = localStorage.getItem(selectedKey);
-    if (!raw) return;
     localStorage.removeItem(selectedKey);
-    setProfiles((prev) => prev.filter((profile) => profile.key !== selectedKey));
+    setProfiles((prev) => prev.filter((p) => p.key !== selectedKey));
     const count = parseInt(localStorage.getItem("profileCount") || "0");
     if (count > 0) {
-      const val = count - 1;
-      localStorage.setItem("profileCount", val.toString());
+      localStorage.setItem("profileCount", (count - 1).toString());
     }
-    handleClose();
-  };
-
-  const editSuccessDrawer = () => {
-    refreshProfiles();
+    setDeleteModalOpen(false);
     setSelectedKey(null);
-    setOpenD(false);
   };
 
-  const showDrawer = (key: string) => {
+  const handleEdit = (key: string) => {
     const selectedProfile = profiles.find((p) => p.key === key);
     if (selectedProfile) {
-      form.setFieldsValue(selectedProfile.data);
+      const updatedProfile = { ...selectedProfile.data };
+      if (updatedProfile.msmeNo) {
+        updatedProfile.msmeNo = updatedProfile.msmeNo.slice(6);
+      }
+      setInitialProfile(updatedProfile);
       setSelectedKey(key);
-      setOpenD(true);
+      setDrawerMode("edit");
+      setDrawerOpen(true);
     }
   };
 
@@ -264,78 +301,92 @@ const ProfilesTable: React.FC = () => {
       key: "key",
       render: (_: number, __: Profile, index: number) => <>{index + 1}</>,
     },
-    { title: "Party Name", dataIndex: "ledgerName", key: "ledgerName" },
+    {
+      title: "Party Name",
+      dataIndex: "ledgerName",
+      key: "ledgerName",
+      sorter: (a: Profile, b: Profile) => a.ledgerName.localeCompare(b.ledgerName),
+      render: (_: any, record: Profile) => (
+        <>
+          {record.ledgerName}
+          {record.aliasName?.length > 0 ? `(${record.aliasName})` : ""}
+        </>
+      ),
+    },
     { title: "Party Group", dataIndex: "party_grp", key: "party_grp" },
     {
       title: "Party Type",
       dataIndex: "gstType",
       key: "gstType",
-      render: (gstTypeId: number) => {
-        const gst = gstType.find((item) => item.id === gstTypeId);
-        return <>{gst?.name}</>;
-      },
+      render: (gstTypeId: number) => gstType.find((g) => g.id === gstTypeId)?.name,
     },
-    { title: "Contact No", dataIndex: "phone", key: "phone" },
-    { title: "Email", dataIndex: "email", key: "email" },
+    {
+      title: "Contact No",
+      key: "phone",
+      render: (_: any, record: Profile) => record.contactInformation?.[0]?.phone,
+    },
+    {
+      title: "Email",
+      key: "email",
+      render: (_: any, record: Profile) => record.contactInformation?.[0]?.email,
+    },
     {
       title: "Action",
       key: "action",
       render: (_: any, record: Profile & { key: string }) => (
         <>
-          <EditOutlined onClick={() => showDrawer(record.key)} />
-          <DeleteOutlined
-            style={{ color: "red", marginLeft: 12 }}
-            onClick={() => handleOpen(record.key)}
-          />
+          <EditOutlined onClick={() => handleEdit(record.key)} />
+          <DeleteOutlined style={{ color: "red", marginLeft: 12 }} onClick={() => handleDelete(record.key)} />
         </>
       ),
     },
   ];
 
   return (
-    <>
+    <div>
+      <Button
+        type="primary"
+        icon={<PlusOutlined />}
+        onClick={() => {
+          setDrawerMode("add");
+          setInitialProfile(null);
+          setSelectedKey(null);
+          setDrawerOpen(true);
+        }}
+        style={{ marginBottom: 16 }}
+      >
+        Add Party
+      </Button>
+
+      <Table dataSource={tableData} columns={columns} rowKey="key" style={{ width: "100vw" }} />
+
       <Modal
-        open={open}
+        open={deleteModalOpen}
         title="Confirmation"
         onOk={handleConfirmDelete}
-        onCancel={handleClose}
+        onCancel={() => setDeleteModalOpen(false)}
       >
-        <p>Are you sure you want to delete Party?</p>
+        <p>Are you sure you want to delete this party?</p>
       </Modal>
 
-      <Drawer
-        width={900}
-        open={openD}
-        onClose={onCloseDrawer}
-        closable={false}
-        title={
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span>Edit Party</span>
-            <Button type="text" icon={<CloseOutlined />} onClick={onCloseDrawer} />
-          </div>
-        }
-        footer={
-          <Row justify="end">
-            <Space>
-              <Button onClick={() => { form.resetFields(); onCloseDrawer(); }}>
-                Cancel
-              </Button>
-              <Button type="primary" onClick={() => form.submit()}>
-                Submit
-              </Button>
-            </Space>
-          </Row>
-        }
-      >
-        <ProfileForm
-          onSuccess={editSuccessDrawer}
-          onClose={onCloseDrawer}
-          form={form}
-          selectedKey={selectedKey}
-        />
-      </Drawer>
-      <Table dataSource={profiles.map(({ key, data }) => ({ ...data, key }))} columns={columns} rowKey="key" />
-    </>
+      <ProfileDrawerWrapper
+        mode={drawerMode}
+        open={drawerOpen}
+        onClose={() => {
+          setDrawerOpen(false);
+          setInitialProfile(null);
+          setSelectedKey(null);
+        }}
+        onSuccess={() => {
+          setProfiles(getProfile());
+          setDrawerOpen(false);
+          setInitialProfile(null);
+          setSelectedKey(null);
+        }}
+        selectedKey={selectedKey}
+        initialValues={initialProfile}
+      />
+    </div>
   );
 };
 
